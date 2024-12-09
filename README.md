@@ -28,7 +28,7 @@ To run this solution, ensure you have the following installed and configured:
    ```
 
 3. **Database Setup**  
-   - The API currently requires predefined table entities for data insertion. Ensure the database tables are set up before running the API.  
+   - ~~The API currently requires predefined table entities for data insertion~~. Ensure the database tables are set up before running the API.  
 
 
 ## Features
@@ -43,7 +43,7 @@ To run this solution, ensure you have the following installed and configured:
 Im planning to enhance the API with the following features:
 
 ### **1. Dynamic Table Entity Support**
-- The API will evolve to handle dynamic table entities, eliminating the need for predefined schemas.
+- ~~The API will evolve to handle dynamic table entities, eliminating the need for predefined schemas~~.
 - **Approach**: 
   - Implement JSON-based column storage for flexible data structures.
   - Introduce a single dynamic table with key-value pairs or JSON objects.
