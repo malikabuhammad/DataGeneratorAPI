@@ -52,3 +52,7 @@ Im planning to enhance the API with the following features:
 - Develop a lightweight frontend interface to interact with the API for inserting and managing data entities.
 
 
+##UPDATES : 
+### **1. Dynamic Table Entity Support**
+- now the api handels dynamic tables , no need to add table entity or whatsoever , but its only working for SQL server (❁´◡`❁), and its query based ..for now 
+
