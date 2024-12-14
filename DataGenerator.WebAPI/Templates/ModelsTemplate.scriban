@@ -4,25 +4,25 @@ using System.ComponentModel.DataAnnotations;
 
 namespace {{ namespace }}.Models
 {
-    public class {{ TableName }}Models
+    public class {{ entity_name }}Models
     {
-        public class {{ TableName }}IndexModel : BaseModel
+        public class {{ entity_name }}IndexModel : BaseModel
         {
-            public List<{{ entity_class }}> {{ TableName }}List { get; set; }
+            public List<{{ entity_class }}> {{ entity_name }}List { get; set; }
         }
 
-        public class {{ TableName }}AddModel : BaseModel
+        public class {{ entity_name }}AddModel : BaseModel
         {
             {{~ for column in columns ~}}
-            public {{ column.DataType }} {{ column.ColumnName }} { get; set; }
+            public {{ column.data_type }} {{ column.column_name }} { get; set; }
             {{~ end ~}}
         }
 
-        public class {{ TableName }}EditModel : BaseModel
+        public class {{ entity_name }}EditModel : BaseModel
         {
             public int {{ primary_key }} { get; set; }
             {{~ for column in columns ~}}
-            public {{ column.DataType }} {{ column.ColumnName }} { get; set; }
+            public {{ column.data_type }} {{ column.column_name }} { get; set; }
             {{~ end ~}}
         }
     }

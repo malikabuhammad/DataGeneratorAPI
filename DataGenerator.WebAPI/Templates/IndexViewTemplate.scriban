@@ -1,7 +1,7 @@
-@model {{ namespace }}.{{ TableName }}Models.{{ TableName }}IndexModel
+@model {{ namespace }}.{{ entity_name }}Models.{{ entity_name }}IndexModel
 
 @{
-    ViewBag.Title = GetResource("Label.Title.{{ TableName }}");
+    ViewBag.Title = GetResource("Label.Title.{{ entity_name }}");
 
     bool PermAdd = checkPermission({{ perm_add }});
     bool PermEdit = checkPermission({{ perm_edit }});
@@ -12,7 +12,7 @@
     <div class="col-xs-12 col-sm-9 col-md-9 col-lg-9">
         <h1 class="page-title txt-color-blueDark">
             <i class="fa fa-fw fa-table"></i>
-            @GetResource("Label.Title.{{ TableName }}")
+            @GetResource("Label.Title.{{ entity_name }}")
         </h1>
     </div>
     <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3">
@@ -30,7 +30,7 @@
             <div class="jarviswidget" id="wid-id-1" data-widget-colorbutton="false" data-widget-editbutton="false">
                 <header>
                     <span class="widget-icon"> <i class="fa fa-table"></i> </span>
-                    <h2>@GetResource("Label.Title.{{ TableName }}")</h2>
+                    <h2>@GetResource("Label.Title.{{ entity_name }}")</h2>
                 </header>
                 <div>
                     <div class="widget-body">
@@ -48,22 +48,22 @@
                             <thead>
                                 <tr>
                                     {{~ for column in columns ~}}
-                                    <th>@GetResource("Label.Global.{{ column.ColumnName }}")</th>
+                                    <th>@GetResource("Label.Global.{{ column.column_name }}")</th>
                                     {{~ end ~}}
                                     <th>@GetResource("Label.Global.Actions")</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var item in Model.{{ TableName }}List)
+                                @foreach (var item in Model.{{ entity_name }}List)
                                 {
                                     <tr>
                                         {{~ for column in columns ~}}
-                                        <td>@item.{{ column.ColumnName }}</td>
+                                        <td>@item.{{ column.column_name }}</td>
                                         {{~ end ~}}
                                         <td>
                                             @if (PermEdit)
                                             {
-                                                <a href="@Url.Action("Edit", "{{ TableName }}", new { EncryptID = Encryption64.EncryptToUrl(item.{{ primary_key }}.ToString()) })" class="btn btn-default txt-color-teal">
+                                                <a href="@Url.Action("Edit", "{{ entity_name }}", new { EncryptID = Encryption64.EncryptToUrl(item.{{ primary_key }}.ToString()) })" class="btn btn-default txt-color-teal">
                                                     <i class="fa fa-edit"></i> @GetResource("Label.Global.Edit")
                                                 </a>
                                             }
@@ -103,7 +103,7 @@
             // Handle Delete Action
             window.deleteItem = function (id) {
                 if (confirm("@GetResource("Messages.Global.DeleteConfirm")")) {
-                    $.post('@Url.Action("Delete", "{{ TableName }}")', { id: id }, function (response) {
+                    $.post('@Url.Action("Delete", "{{ entity_name }}")', { id: id }, function (response) {
                         if (response.status === 1) {
                             alert("@GetResource("Messages.Global.DeleteSuccess")");
                             location.reload();

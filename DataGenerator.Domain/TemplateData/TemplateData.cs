@@ -20,8 +20,8 @@ namespace DataGenerator.Domain.TemplateData
     }
     public class ColumnMeta
     {
-        public string ColumnName { get; set; }
-        public string DataType { get; set; }
+         public string column_name { get; set; }
+        public string data_type { get; set; }
         public bool IsIdentity { get; set; }
     }
 

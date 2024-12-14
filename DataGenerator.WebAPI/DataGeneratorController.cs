@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Hosting;
 using DataGenerator.Domain.TemplateData;
+using System.Xml;
+using Newtonsoft.Json;
 namespace DataGenerator.WebAPI.Controllers
 {
     [ApiController]
@@ -153,12 +155,13 @@ namespace DataGenerator.WebAPI.Controllers
                     PermIndex=PermIndex,
                     Columns = tableMetaData.Select(c => new ColumnMeta
                     {
-                        ColumnName = c.ColumnName,
-                        DataType = MapToCSharpType( c.DataType),
+                        column_name = c.ColumnName,
+                        data_type = MapToCSharpType( c.DataType),
                         IsIdentity = c.IsIdentity
                     })
                 };
                 string templatePath = Path.Combine(_webHostEnvironment.ContentRootPath, "Templates");
+                Console.WriteLine(JsonConvert.SerializeObject(templateData.Columns, Newtonsoft.Json.Formatting.Indented));
 
                 // Generate Controller
                 string controllerContent = RenderTemplate(Path.Combine(templatePath, "ControllerTemplate.scriban"), templateData);
