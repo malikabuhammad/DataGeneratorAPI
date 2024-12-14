@@ -1,7 +1,8 @@
 
 # Mock Data Insertion API
 
-A .NET 9 API designed for inserting mock data into predefined table entities.
+A .NET 9 API designed for inserting mock data into a table dynamically no need for any entity .
+Additionally it generates a customer model view controller 
 
 ---
 
