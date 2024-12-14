@@ -1,0 +1,219 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using {{ namespace }}.Models;
+using {{ namespace }}.Core;
+using {{ namespace }}.Core.Utilities;
+
+namespace {{ namespace }}.Controllers
+{
+    [Authorize]
+    public class {{ entity_name }}Controller : BaseController
+    {
+        private readonly IUnitOfWork _unitOfWork;
+
+        public {{ entity_name }}Controller(IHttpContextAccessor httpContextAccessor, IUnitOfWork unitOfWork)
+            : base(httpContextAccessor, unitOfWork)
+        {
+            _unitOfWork = unitOfWork;
+        }
+
+        #region Permissions
+        int PermIndex = {{ perm_index }};
+        int PermAdd = {{ perm_add }};
+        int PermEdit = {{ perm_edit }};
+        int PermDelete = {{ perm_delete }};
+        #endregion
+
+        public IActionResult Index()
+        {
+            var permissionObj = checkPagePermission(PermIndex);
+            if (permissionObj != null)
+                return permissionObj;
+
+            var model = new {{ entity_name }}Models.{{ entity_name }}IndexModel();
+            try
+            {
+                model.List = _unitOfWork.{{ entity_name }}.GetAll().ToList();
+            }
+            catch (Exception ex)
+            {
+                // Handle errors if necessary
+            }
+            return View(model);
+        }
+
+        [HttpGet]
+        [ActionName("Add")]
+        public IActionResult Add()
+        {
+            var permissionObj = checkPagePermission(PermAdd);
+            if (permissionObj != null)
+                return permissionObj;
+
+            var model = TempData.Get<{{ entity_name }}Models.{{ entity_name }}AddModel>("Create{{ entity_name }}Add") 
+                         ?? new {{ entity_name }}Models.{{ entity_name }}AddModel();
+            return View(model);
+        }
+
+        [HttpPost]
+        [ActionName("Add")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddAsync({{ entity_name }}Models.{{ entity_name }}AddModel model)
+        {
+            var permissionObj = checkPagePermission(PermAdd);
+            if (permissionObj != null)
+                return permissionObj;
+
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var entity = new {{ entity_name }}()
+                    {
+                        {{~ for column in columns ~}}
+                        {{ column.columnName }} = model.{{ column.columname }},
+                        {{ column.columnname }} = model.{{ column.columname }},
+                        {{~ end ~}}
+                    };
+
+                    _unitOfWork.{{ entity_name }}.AddAsync(entity);
+                    _unitOfWork.Complete();
+                    model = new {{ entity_name }}Models.{{ entity_name }}AddModel();
+                    model.Status = Core.Enums.AlertStatus.Success;
+                    model.AlertMessages.Add(GetResource("Messages.Global.AddSuccess"));
+                }
+                else
+                {
+                    model.Status = Core.Enums.AlertStatus.Failed;
+                    model.AlertMessages.Add(GetResource("Messages.Global.NotValidModelState"));
+                }
+            }
+            catch (Exception ex)
+            {
+                var error = GeneralFunctions.SqlError(ex);
+                model.AlertMessages.Add(GetResource("Messages.Global.AddFailed"));
+                if (error == Core.Enums.SqlError.UniqueKeyError || error == Core.Enums.SqlError.PrimeryKeyError)
+                {
+                    model.AlertMessages.Add(GetResource("Messages.Global.DBUniquePrimary"));
+                }
+                model.Status = Core.Enums.AlertStatus.Failed;
+            }
+
+            TempData.Put("Create{{ entity_name }}Add", model);
+            return RedirectToAction("Add");
+        }
+
+        [HttpGet]
+        [ActionName("Edit")]
+        public IActionResult Edit(string EncryptID)
+        {
+            var permissionObj = checkPagePermission(PermEdit);
+            if (permissionObj != null)
+                return permissionObj;
+
+            try
+            {
+                var model = TempData.Get<{{ entity_name }}Models.{{ entity_name }}EditModel>("{{ entity_name }}Edit") 
+                            ?? new {{ entity_name }}Models.{{ entity_name }}EditModel();
+
+                var entity = _unitOfWork.{{ entity_name }}.GetById(int.Parse(Core.Utilities.Encryption64.DecryptFromUrl(EncryptID)));
+                if (entity == null)
+                    return RedirectToAction("Index");
+
+                model.{{ primary_key }} = entity.{{ primary_key }};
+                {{~ for column in columns ~}}
+                model.{{ column.columnName }} = entity.{{ column.columnName }};
+                {{~ end ~}}
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                // Handle errors
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ActionName("Edit")]
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit({{ entity_name }}Models.{{ entity_name }}EditModel model)
+        {
+            var permissionObj = checkPagePermission(PermEdit);
+            if (permissionObj != null)
+                return permissionObj;
+
+            try
+            {
+                var entity = _unitOfWork.{{ entity_name }}.GetById(model.{{ primary_key }});
+                if (entity != null && ModelState.IsValid)
+                {
+                    {{~ for column in columns ~}}
+                    entity.{{ column.columnName }} = model.{{ column.columnName }};
+                    {{~ end ~}}
+
+                    _unitOfWork.{{ entity_name }}.Update(entity);
+                    _unitOfWork.Complete();
+
+                    model.Status = Core.Enums.AlertStatus.Success;
+                    model.AlertMessages.Add(GetResource("Messages.Global.EditSuccess"));
+                }
+                else
+                {
+                    model.Status = Core.Enums.AlertStatus.Failed;
+                    model.AlertMessages.Add(GetResource("Messages.Global.NotValidModelState"));
+                }
+            }
+            catch (Exception ex)
+            {
+                var error = GeneralFunctions.SqlError(ex);
+                model.AlertMessages.Add(GetResource("Messages.Global.EditFailed"));
+                if (error == Core.Enums.SqlError.UniqueKeyError || error == Core.Enums.SqlError.PrimeryKeyError)
+                {
+                    model.AlertMessages.Add(GetResource("Messages.Global.DBUniquePrimary"));
+                }
+                model.Status = Core.Enums.AlertStatus.Failed;
+            }
+
+            TempData.Put("{{ entity_name }}Edit", model);
+            return RedirectToAction("Edit", new { EncryptID = Core.Utilities.Encryption64.EncryptToUrl(model.{{ primary_key }}.ToString()) });
+        }
+
+        [HttpPost]
+        [ActionName("Delete")]
+        public IActionResult Delete(int id)
+        {
+            var permissionObj = checkPagePermission(PermDelete);
+            if (permissionObj != null)
+                return permissionObj;
+
+            var result = new ApiMessageEntity();
+            try
+            {
+                var entity = _unitOfWork.{{ entity_name }}.GetById(id);
+                if (entity != null)
+                {
+                    _unitOfWork.{{ entity_name }}.Delete(entity);
+                    _unitOfWork.Complete();
+
+                    result.AlertMessages.Add(GetResource("Messages.Global.DeleteSuccess"));
+                    result.Status = Core.Enums.AlertStatus.Success;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.AlertMessages.Add(GetResource("Messages.Global.DeleteFailed"));
+                result.Status = Core.Enums.AlertStatus.Failed;
+
+                var error = GeneralFunctions.SqlError(ex);
+                if (error == Core.Enums.SqlError.ForeignKeyError)
+                {
+                    result.AlertMessages.Add(GetResource("Messages.Global.DBForeignKey.Delete"));
+                }
+            }
+
+            return Json(result);
+        }
+    }
+}

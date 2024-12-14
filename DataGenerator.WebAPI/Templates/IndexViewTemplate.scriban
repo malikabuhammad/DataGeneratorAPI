@@ -1,0 +1,118 @@
+@model {{ namespace }}.{{ TableName }}Models.{{ TableName }}IndexModel
+
+@{
+    ViewBag.Title = GetResource("Label.Title.{{ TableName }}");
+
+    bool PermAdd = checkPermission({{ perm_add }});
+    bool PermEdit = checkPermission({{ perm_edit }});
+    bool PermDelete = checkPermission({{ perm_delete }});
+}
+
+@section PageHeader {
+    <div class="col-xs-12 col-sm-9 col-md-9 col-lg-9">
+        <h1 class="page-title txt-color-blueDark">
+            <i class="fa fa-fw fa-table"></i>
+            @GetResource("Label.Title.{{ TableName }}")
+        </h1>
+    </div>
+    <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3">
+        <a href="@Url.Action("Index")" class="btn btn-back btn-lg pull-right header-btn">
+            <i class="fa fa-circle-arrow-up fa-chevron-left"></i>
+            @GetResource("Label.Global.Back")
+        </a>
+    </div>
+}
+
+<!-- Main Content -->
+<section id="widget-grid">
+    <div class="row">
+        <article class="col-sm-12 col-md-12 col-lg-12">
+            <div class="jarviswidget" id="wid-id-1" data-widget-colorbutton="false" data-widget-editbutton="false">
+                <header>
+                    <span class="widget-icon"> <i class="fa fa-table"></i> </span>
+                    <h2>@GetResource("Label.Title.{{ TableName }}")</h2>
+                </header>
+                <div>
+                    <div class="widget-body">
+                        <!-- Add Button -->
+                        @if (PermAdd)
+                        {
+                            <a href="@Url.Action("Add")" class="btn btn-primary btn-sm margin-top-0 header-btn margin-left-5">
+                                <i class="fa fa-circle-arrow-up fa-plus"></i>
+                                @GetResource("Label.Global.Add")
+                            </a>
+                        }
+
+                        <!-- Table -->
+                        <table id="tbl_Data" class="table table-striped table-bordered" width="100%">
+                            <thead>
+                                <tr>
+                                    {{~ for column in columns ~}}
+                                    <th>@GetResource("Label.Global.{{ column.ColumnName }}")</th>
+                                    {{~ end ~}}
+                                    <th>@GetResource("Label.Global.Actions")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.{{ TableName }}List)
+                                {
+                                    <tr>
+                                        {{~ for column in columns ~}}
+                                        <td>@item.{{ column.ColumnName }}</td>
+                                        {{~ end ~}}
+                                        <td>
+                                            @if (PermEdit)
+                                            {
+                                                <a href="@Url.Action("Edit", "{{ TableName }}", new { EncryptID = Encryption64.EncryptToUrl(item.{{ primary_key }}.ToString()) })" class="btn btn-default txt-color-teal">
+                                                    <i class="fa fa-edit"></i> @GetResource("Label.Global.Edit")
+                                                </a>
+                                            }
+                                            @if (PermDelete)
+                                            {
+                                                <button class="btn btn-default txt-color-red" onclick="deleteItem('@item.{{ primary_key }}');">
+                                                    <i class="fa fa-trash"></i> @GetResource("Label.Global.Delete")
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+</section>
+
+@section pagespecific {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#tbl_Data').DataTable({
+                language: {
+                    lengthMenu: "@GetResource("Setting.Datatables.Languages.lengthMenu")",
+                    zeroRecords: "@GetResource("Setting.Datatables.Languages.zeroRecords")",
+                    info: "@GetResource("Setting.Datatables.Languages.info")",
+                    infoEmpty: "@GetResource("Setting.Datatables.Languages.infoEmpty")",
+                    infoFiltered: "@GetResource("Setting.Datatables.Languages.infoFiltered")",
+                },
+                responsive: true,
+                autoWidth: false
+            });
+
+            // Handle Delete Action
+            window.deleteItem = function (id) {
+                if (confirm("@GetResource("Messages.Global.DeleteConfirm")")) {
+                    $.post('@Url.Action("Delete", "{{ TableName }}")', { id: id }, function (response) {
+                        if (response.status === 1) {
+                            alert("@GetResource("Messages.Global.DeleteSuccess")");
+                            location.reload();
+                        } else {
+                            alert("@GetResource("Messages.Global.DeleteFailed")");
+                        }
+                    });
+                }
+            };
+        });
+    </script>
+}

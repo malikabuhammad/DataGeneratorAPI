@@ -1,0 +1,87 @@
+@model {{ namespace }}.{{ TableName }}Models.{{ TableName }}EditModel
+
+@{
+    ViewBag.Title = GetResource("Label.Title.{{ TableName }}Edit");
+}
+
+@section PageHeader {
+    <div class="col-xs-12 col-sm-9 col-md-9 col-lg-9">
+        <h1 class="page-title txt-color-blueDark">
+            <i class="fa fa-fw fa-edit"></i>
+            @GetResource("Label.Title.{{ TableName }}Edit")
+        </h1>
+    </div>
+    <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3">
+        <a href="@Url.Action("Index")" class="btn btn-back btn-lg pull-right header-btn">
+            <i class="fa fa-circle-arrow-up fa-chevron-left"></i>
+            @GetResource("Label.Global.Back")
+        </a>
+    </div>
+}
+
+<section id="widget-grid">
+    <div class="row">
+        <article class="col-sm-12 col-md-12 col-lg-12">
+            <div class="jarviswidget">
+                <header>
+                    <h2>@GetResource("Label.Global.EditForm")</h2>
+                </header>
+                <div>
+                    <div class="widget-body">
+                        @using (Html.BeginForm("Edit", "{{ TableName }}", FormMethod.Post, new { @id = "edit-form", @novalidate = "novalidate", @autocomplete = "off" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.HiddenFor(model => model.{{ primary_key }})
+
+                            <fieldset>
+                                <div class="row">
+                                    {{~ for column in columns ~}}
+                                    <div class="col-sm-12 col-md-6">
+                                        <div class="form-group">
+                                            <label class="control-label">
+                                                @GetResource("Label.Global.{{ column.ColumnName }}")
+                                            </label>
+                                            @Html.EditorFor(model => model.{{ column.ColumnName }}, new { htmlAttributes = new { @class = "form-control", @placeholder = @GetResource("Label.Global.{{ column.ColumnName }}") } })
+                                        </div>
+                                    </div>
+                                    {{~ end ~}}
+                                </div>
+                            </fieldset>
+
+                            <footer>
+                                <button type="submit" class="btn btn-primary">
+                                    @GetResource("Label.Global.Save")
+                                </button>
+                            </footer>
+                        }
+                    </div>
+                </div>
+            </div>
+        </article>
+    </div>
+</section>
+
+@section pagespecific {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#edit-form').bootstrapValidator({
+                feedbackIcons: {
+                    valid: 'glyphicon glyphicon-ok',
+                    invalid: 'glyphicon glyphicon-remove',
+                    validating: 'glyphicon glyphicon-refresh'
+                },
+                fields: {
+                    {{~ for column in columns ~}}
+                    {{ column.ColumnName }}: {
+                        validators: {
+                            notEmpty: {
+                                message: '@GetResource("Validations.Global.RequiredField")'
+                            }
+                        }
+                    },
+                    {{~ end ~}}
+                }
+            });
+        });
+    </script>
+}

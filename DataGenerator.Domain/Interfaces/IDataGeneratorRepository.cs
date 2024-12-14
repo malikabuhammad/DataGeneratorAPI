@@ -10,5 +10,6 @@ namespace DataGenerator.Domain.Interfaces
     {
         List<string> GetTableNames();
         Task<int> InsertMockData(string tableName, int recordCount);
+        Task<List<(string ColumnName, string DataType, bool IsIdentity)>> GetTableMetadataAsync(string tableName);
     }
 }

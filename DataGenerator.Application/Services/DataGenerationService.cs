@@ -3,6 +3,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
  using DataGenerator.Domain.Interfaces;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Principal;
 
 namespace DataGenerator.Application.Services
 {
@@ -28,5 +30,15 @@ namespace DataGenerator.Application.Services
 
             return await _repository.InsertMockData(tableName, recordCount);
         }
+
+
+        public async Task<List<(string ColumnName, string DataType, bool IsIdentity)>> GetTableMetadataAsync(string tableName)
+        {
+            if (string.IsNullOrEmpty(tableName))
+                throw new ArgumentException("Table name cannot be empty.");
+
+            return await _repository.GetTableMetadataAsync(tableName);
+        }
+
     }
 }

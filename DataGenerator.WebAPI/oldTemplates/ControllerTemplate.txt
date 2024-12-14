@@ -1,0 +1,226 @@
+using {Namespace}.Core.Utilities;
+using {Namespace}.Core.EntitiesCustom;
+using Microsoft.AspNetCore.Mvc;
+using {Namespace}.Core.Models;
+using {Namespace}.Core;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using {Namespace}.Core.Core;
+using Microsoft.AspNetCore.Http;
+using {Namespace}.Core.Services;
+using Microsoft.AspNetCore.Authorization;
+using {Namespace}.Services;
+using System.IO;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
+namespace {Namespace}.Controllers
+{
+    [Authorize]
+    public class {TableName}Controller : BaseController
+    {
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IHostingEnvironment _env;
+
+        public {TableName}Controller(IHttpContextAccessor httpContextAccessor, IUnitOfWork unitOfWork, IHostingEnvironment env)
+            : base(httpContextAccessor, unitOfWork)
+        {
+            _unitOfWork = unitOfWork;
+            _httpContextAccessor = httpContextAccessor;
+            _env = env;
+        }
+
+        #region {TableName} Management
+
+        int PermIndex = {PermIndex};
+        int PermAdd = {PermAdd};
+        int PermEdit = {PermEdit};
+        int PermDelete = {PermDelete};
+
+        public IActionResult Index()
+        {
+            var permissionObj = checkPagePermission(PermIndex);
+            if (permissionObj != null)
+            {
+                return permissionObj;
+            }
+
+            var model = new {TableName}IndexModel();
+            try
+            {
+                model.{TableName}List = _unitOfWork.{TableName}.GetAll().ToList();
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+            }
+            return View(model);
+        }
+
+        [HttpGet]
+        [ActionName("Add")]
+        public IActionResult Add()
+        {
+            var permissionObj = checkPagePermission(PermAdd);
+            if (permissionObj != null)
+            {
+                return permissionObj;
+            }
+
+            var model = TempData.Get<{TableName}AddModel>("Create{TableName}Add") ?? new {TableName}AddModel();
+            return View(model);
+        }
+
+        [HttpPost]
+        [ActionName("Add")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddAsync({TableName}AddModel model)
+        {
+            var permissionObj = checkPagePermission(PermAdd);
+            if (permissionObj != null)
+            {
+                return permissionObj;
+            }
+
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    var entity = new {EntityName}
+                    {
+                        {PropertiesAssignment}
+                    };
+
+                    await _unitOfWork.{TableName}.AddAsync(entity);
+                    _unitOfWork.Complete();
+                    model = new {TableName}AddModel();
+                    model.Status = Core.Enums.AlertStatus.Success;
+                    model.AlertMessages.Add("Record added successfully.");
+                }
+                else
+                {
+                    model.Status = Core.Enums.AlertStatus.Failed;
+                    model.AlertMessages.Add("Invalid data.");
+                }
+            }
+            catch (Exception ex)
+            {
+                model.AlertMessages.Add("An error occurred while adding the record.");
+                model.Status = Core.Enums.AlertStatus.Failed;
+            }
+
+            TempData.Put("Create{TableName}Add", model);
+            return RedirectToAction("Add");
+        }
+
+        [HttpGet]
+        [ActionName("Edit")]
+        public IActionResult Edit(string EncryptID)
+        {
+            var permissionObj = checkPagePermission(PermEdit);
+            if (permissionObj != null)
+            {
+                return permissionObj;
+            }
+
+            try
+            {
+                var model = TempData.Get<{TableName}EditModel>("Edit{TableName}");
+                if (model == null)
+                {
+                    var entity = _unitOfWork.{TableName}.GetById(int.Parse(Core.Utilities.Encryption64.DecryptFromUrl(EncryptID)));
+                    if (entity == null)
+                    {
+                        return RedirectToAction("Index");
+                    }
+
+                    model = new {TableName}EditModel
+                    {
+                        {PropertiesAssignment}
+                    };
+                }
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ActionName("Edit")]
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit({TableName}EditModel model)
+        {
+            var permissionObj = checkPagePermission(PermEdit);
+            if (permissionObj != null)
+            {
+                return permissionObj;
+            }
+
+            try
+            {
+                var entity = _unitOfWork.{TableName}.GetById(model.Id);
+                if (entity != null && ModelState.IsValid)
+                {
+                    {PropertiesUpdate}
+
+                    _unitOfWork.{TableName}.Update(entity);
+                    _unitOfWork.Complete();
+                    model.Status = Core.Enums.AlertStatus.Success;
+                    model.AlertMessages.Add("Record updated successfully.");
+                }
+                else
+                {
+                    model.Status = Core.Enums.AlertStatus.Failed;
+                    model.AlertMessages.Add("Invalid data.");
+                }
+            }
+            catch (Exception ex)
+            {
+                model.AlertMessages.Add("An error occurred while updating the record.");
+                model.Status = Core.Enums.AlertStatus.Failed;
+            }
+
+            TempData.Put("Edit{TableName}", model);
+            return RedirectToAction("Edit", new { EncryptID = Core.Utilities.Encryption64.EncryptToUrl(model.Id.ToString()) });
+        }
+
+        [HttpPost]
+        [ActionName("Delete")]
+        public IActionResult Delete(int id)
+        {
+            var result = new ApiMessageEntity();
+            if (checkPermissionCookie(PermDelete))
+            {
+                try
+                {
+                    var entity = _unitOfWork.{TableName}.GetById(id);
+                    _unitOfWork.{TableName}.Delete(entity);
+                    _unitOfWork.Complete();
+                    result.AlertMessages.Add("Record deleted successfully.");
+                    result.Status = Core.Enums.AlertStatus.Success;
+                }
+                catch (Exception ex)
+                {
+                    result.AlertMessages.Add("An error occurred while deleting the record.");
+                    result.Status = Core.Enums.AlertStatus.Failed;
+                }
+            }
+            else
+            {
+                result.AlertMessages.Add("You do not have permission to delete records.");
+                result.Status = Core.Enums.AlertStatus.Failed;
+            }
+            return Json(result);
+        }
+
+        #endregion
+    }
+}

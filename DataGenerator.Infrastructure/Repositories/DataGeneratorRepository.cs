@@ -61,7 +61,7 @@ where table_type='Base table' and table_schema = 'dbo'
 
 
         //returning the table columns 
-         private async Task<List<(string ColumnName, string DataType, bool IsIdentity)>> GetTableMetadataAsync(string tableName)
+        public async Task<List<(string ColumnName, string DataType, bool IsIdentity)>> GetTableMetadataAsync(string tableName)
         {
             var result = new List<(string ColumnName, string DataType, bool IsIdentity)>();
 
